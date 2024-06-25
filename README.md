@@ -1,2 +1,2 @@
 # pytest-record-video
-用例录屏
+Pytest用例录屏插件

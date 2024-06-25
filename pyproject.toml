@@ -1,0 +1,38 @@
+[project]
+name = "pytest-record-video"
+description = "用例执行过程中录制视频"
+authors = [
+    { name = "DarkLii", email = "liguangming@uniontech.com" },
+]
+dependencies = [
+    "pytest",
+    "funnylog",
+    "pyautogui",
+    "allure-pytest",
+]
+dynamic = [
+    "version",
+]
+
+requires-python = ">=3.7"
+readme = "README.md"
+license = { text = "GPL2.0" }
+
+[project.scripts]
+
+[project.entry-points.pytest11]
+pytest-record-video = "pytest_record_video.plugin"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[tool.hatch]
+version = { path = "pytest_record_video/__version__.py" }
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "/pytest_record_video",
+]
+
