@@ -16,16 +16,19 @@ from os.path import dirname
 from contextlib import contextmanager
 
 
-def recording_screen(name):
+def recording_screen(name, job_dir=None):
     """
      录制视频
     :param name: 视频名称
     :return:
     """
 
-    _root_dir = dirname(dirname(abspath(__file__)))
+    logger.info("开始录屏")
+
+    if job_dir is None:
+        job_dir = dirname(dirname(abspath(__file__)))
     record_path = (
-        f'{_root_dir}/report/record/{time.strftime("%Y-%m-%d", time.localtime())}/'
+        f'{job_dir}/report/record/{time.strftime("%Y-%m-%d", time.localtime())}/'
     )
     if not os.path.exists(record_path):
         os.makedirs(record_path)
@@ -34,7 +37,7 @@ def recording_screen(name):
         width,
         height,
         record_path,
-        f"{time.strftime('%H时%M分%S秒', time.localtime())}_{name.encode('utf-8').decode('unicode-escape')[:40].replace('/', '_')}_autotest",
+        f"{name.encode('utf-8').decode('unicode-escape')[:40].replace('/', '_')}_autotest",
     )
 
     for path in paths:

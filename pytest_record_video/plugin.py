@@ -10,40 +10,54 @@ from os.path import splitext
 from time import sleep
 from funnylog import logger
 from shutil import copyfile
+from datetime import datetime
 from pytest_record_video.cmdctl import CmdCtl
 from pytest_record_video.recording_screen import recording_screen
 
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--record_failed_case",
-        action="store",
-        default="1",
-        help="失败录屏从第几次失败开始录制视频"
+        "--record_video", action="store", default=False,
+        help="用例录屏，开启后每条用例都录制视频"
     )
-
     parser.addoption(
-        "--record_failed_case",
-        action="store",
-        default="1",
-        help="失败录屏从第几次失败开始录制视频"
+        "--record_failed_video", action="store", default=False,
+        help="失败录屏，开启后只有失败用例保存视频"
+    )
+    parser.addoption(
+        "--record_failed_num", action="store", default=False,
+        help="失败录屏，从第几次失败开始录制视频，此参数需要结合 pytest-rerunfailures 插件使用"
     )
 
 
 def pytest_runtest_setup(item):
     print()
 
-    try:
-        if item.execution_count >= (int(item.config.option.record_failed_case) + 1):
-            logger.info("开启录屏")
-            item.record = {}
-            item.record["object"] = recording_screen(
-                f"{item.name}_{item.execution_count}"
-            )  # 存放录屏对象
-            item.record["image_path"] = next(item.record["object"])  # 录屏文件地址
-            sleep(3)  # 等待3秒，优化录屏效果
-    except AttributeError:
-        pass
+    # 用例执行前，判断是否开启录屏
+    if (item.config.option.record_video
+            or item.config.option.record_failed_video
+            or item.config.option.record_failed_num):
+        item.record = {}
+        _job_dir = item.session.fspath.strpath
+        _record_name = f'{item.name}_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+
+        try:
+            if item.config.option.record_video or item.config.option.record_failed_video:
+                # 用例录屏
+                item.record["object"] = recording_screen(_record_name, _job_dir)
+                item.record["image_path"] = next(item.record["object"])
+                sleep(3)
+            elif item.config.option.record_failed_num:
+                # 失败录屏，从第几次失败开始录制视频，此参数需要结合 pytest-rerunfailures 插件使用
+                execution_count = getattr(item, "execution_count", False)
+                if (execution_count is not False
+                        and execution_count > int(item.config.option.record_failed_num)):
+                    item.record["object"] = recording_screen(_record_name, _job_dir)
+                    item.record["image_path"] = next(item.record["object"])
+                    sleep(3)
+
+        except Exception as e:
+            logger.info(f"录屏失败: {e}")
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
@@ -52,7 +66,9 @@ def pytest_runtest_makereport(item, call):
     report = out.get_result()
 
     try:
-        if item.execution_count >= (int(item.config.option.record_failed_case) + 1):
+        if (item.config.option.record_video
+                or item.config.option.record_failed_video
+                or item.config.option.record_failed_num):
             if report.when == "call":  # 存放录屏当次测试结果
                 item.record["result"] = report.outcome
                 try:
@@ -75,7 +91,7 @@ def pytest_runtest_makereport(item, call):
                 except StopIteration:
                     _case_passed = "passed"
                     # 录屏时测试结果为passed，则删除视频
-                    if item.record.get("result") == _case_passed:
+                    if item.record.get("result") == _case_passed and item.config.option.record_video is False:
                         try:
                             remove(item.record["image_path"])
                         except FileNotFoundError:
@@ -120,7 +136,7 @@ def pytest_runtest_makereport(item, call):
                         )
                     logger.info(
                         "结束录屏! "
-                        f"{'重跑用例测试成功，删除视频录像' if item.record.get('result') == _case_passed else ''}"
+                        f"{'用例测试通过，删除视频录像' if item.record.get('result') == _case_passed and item.config.option.record_video is False else ''}"
                     )
     except (AttributeError, KeyError):
         pass
