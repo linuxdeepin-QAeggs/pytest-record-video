@@ -91,7 +91,9 @@ def pytest_runtest_makereport(item, call):
                 except StopIteration:
                     _case_passed = "passed"
                     # 录屏时测试结果为passed，则删除视频
-                    if item.record.get("result") == _case_passed and item.config.option.record_video is False:
+                    _is_remove_record = (item.record.get("result") == _case_passed
+                                         and item.config.option.record_video is False)
+                    if _is_remove_record:
                         try:
                             remove(item.record["image_path"])
                         except FileNotFoundError:
@@ -136,7 +138,7 @@ def pytest_runtest_makereport(item, call):
                         )
                     logger.info(
                         "结束录屏! "
-                        f"{'用例测试通过，删除视频录像' if item.record.get('result') == _case_passed and item.config.option.record_video is False else ''}"
+                        f"{'用例测试通过，删除视频录像' if _is_remove_record else ''}"
                     )
     except (AttributeError, KeyError):
         pass
