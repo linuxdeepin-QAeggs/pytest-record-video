@@ -8,7 +8,7 @@ from os import remove
 from os.path import exists
 from os.path import splitext
 from time import sleep
-from funnylog import logger
+from funnylog2 import logger
 from shutil import copyfile
 from datetime import datetime
 from pytest_record_video.cmdctl import CmdCtl
@@ -31,8 +31,6 @@ def pytest_addoption(parser):
 
 
 def pytest_runtest_setup(item):
-    print()
-
     # 用例执行前，判断是否开启录屏
     if (item.config.option.record_video
             or item.config.option.record_failed_video

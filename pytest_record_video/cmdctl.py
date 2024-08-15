@@ -6,7 +6,7 @@
 import sys
 import subprocess
 
-from funnylog import logger
+from funnylog2 import logger
 
 
 class CmdCtl:

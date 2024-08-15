@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # _*_ coding:utf-8 _*_
-
 # SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
 # SPDX-License-Identifier: GPL-2.0-only
 
 import time
 import os
 import errno
-import pyautogui
 import subprocess as sp
 
-from funnylog import logger
+from funnylog2 import logger
 from os.path import abspath
 from os.path import dirname
 from contextlib import contextmanager
+from Xlib.display import Display
 
 
 def recording_screen(name, job_dir=None):
@@ -22,9 +21,7 @@ def recording_screen(name, job_dir=None):
     :param name: 视频名称
     :return:
     """
-
     logger.info("开始录屏")
-
     if job_dir is None:
         job_dir = dirname(dirname(abspath(__file__)))
     record_path = (
@@ -32,7 +29,10 @@ def recording_screen(name, job_dir=None):
     )
     if not os.path.exists(record_path):
         os.makedirs(record_path)
-    width, height = pyautogui.size()
+
+    _display = Display(os.environ['DISPLAY'])
+    width = _display.screen().width_in_pixels
+    height = _display.screen().height_in_pixels
     cmd, paths = _create_ffmpeg_cmd(
         width,
         height,
